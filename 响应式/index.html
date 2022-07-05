@@ -8,42 +8,43 @@
 </head>
 <body>
   <!-- <script src="./index.js"></script> -->
-  <script src="./分支切换与cleanup.js"></script>
+  <!-- <script src="./分支切换与cleanup.js"></script> -->
+  <script src="./嵌套的effect与effect栈.js"></script>
   <script>
     // 1
-    // let obj = {
-    //   name: 'pino',
-    //   age: 18
-    // }
+    let obj = {
+      name: 'pino',
+      age: 18
+    }
 
-    // let pro = reactive(obj)
+    let pro = reactive(obj)
 
-    // effect(function() {
-    //   console.log(pro.name)
-    // })
+    effect(function() {
+      console.log(pro.name)
+    })
 
-    // pro.name = '黄瓜'
+    pro.name = '黄瓜'
 
 
 
     // 2
 
-    const data = {
-      ok: true,
-      text: 'hello world'
-    }
+    // const data = {
+    //   ok: true,
+    //   text: 'hello world'
+    // }
 
-    const obj = reactive(data)
+    // const obj = reactive(data)
 
-    effect(function effectFn() {
-        console.log('zhixingle~')
-        document.body.innerText = obj.ok ? obj.text : 'not'
-    })
+    // effect(function effectFn() {
+    //     console.log('zhixingle~')
+    //     document.body.innerText = obj.ok ? obj.text : 'not'
+    // })
 
-    obj.ok = false
+    // obj.ok = false
 
-    obj.text = 'hahahha'
-    obj.text = 'wewewe'
+    // obj.text = 'hahahha'
+    // obj.text = 'wewewe'
 
    
 
