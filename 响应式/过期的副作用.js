@@ -1,4 +1,3 @@
-
 let activeEffect
 
 const effectStack = []
@@ -18,14 +17,14 @@ function reactive(obj) {
 }
 
 function track(target, key) {
-  if(!target) return
+  if (!target) return
   let depsMap = bucket.get(target)
-  if(!depsMap) {
+  if (!depsMap) {
     bucket.set(target, (depsMap = new Map()))
   }
 
   let deps = depsMap.get(key)
-  if(!deps) {
+  if (!deps) {
     depsMap.set(key, (deps = new Set()))
   }
 
@@ -36,19 +35,19 @@ function track(target, key) {
 
 function trigger(target, key) {
   const depsMap = bucket.get(target)
-  if(!depsMap) return
+  if (!depsMap) return
   const effects = depsMap.get(key)
 
   let effectsToRun = new Set()
 
   effects && effects.forEach(effectFn => {
-    if(effectFn !== activeEffect) {
+    if (effectFn !== activeEffect) {
       effectsToRun.add(effectFn)
     }
   })
 
   effectsToRun.forEach(effect => {
-    if(effectFn.options.scheduler) {
+    if (effectFn.options.scheduler) {
       effectFn.options.scheduler(effect)
     } else {
       effect()
@@ -59,29 +58,29 @@ function trigger(target, key) {
 
 function effect(fn, options = {}) {
 
-  let effectFn = function() {
+  let effectFn = function () {
     cleanup(effectFn)
     activeEffect = effectFn
     effectStack.push(effectFn)
     let res = fn()
     effectStack.pop()
-    activeEffect = effectStack[effectStack.length - 1] 
- 
+    activeEffect = effectStack[effectStack.length - 1]
+
     return res // 新增
   }
   effectFn.options = options
 
   effectFn.deps = []
-  if(!options.lazy) {
+  if (!options.lazy) {
     effectFn()
   }
-  
-  return  effectFn
+
+  return effectFn
 }
 
 function cleanup(effectFn) {
 
-  for(let i = 0; i < effectFn.deps.length; i++) {
+  for (let i = 0; i < effectFn.deps.length; i++) {
     // [effectFn, effectFn]
     const dep = effectFn.deps[i]
     dep.delete(effectFn)
@@ -98,17 +97,17 @@ function computed(getter) {
   let effectFn = effect(getter, {
     lazy: true,
     scheduler() {
-      if(!dirty) {
+      if (!dirty) {
         dirty = true
         trigger(obj, 'value')
       }
-     
+
     }
   })
 
   let obj = {
     get value() {
-      if(dirty) {
+      if (dirty) {
         value = effectFn()
         dirty = false
       }
@@ -125,15 +124,14 @@ function computed(getter) {
 function watch(source, cb, options = {}) {
   let getter
   let cleanup
-  if(typeof source === 'function') {
+  if (typeof source === 'function') {
     getter = source
   } else {
     getter = () => traverse(source)
   }
 
   let newVal, oldVal;
-  const effectFn = effect(()=> getter(), 
-  {
+  const effectFn = effect(() => getter(), {
     lazy: true,
     scheduler: runFn
   })
@@ -153,7 +151,7 @@ function watch(source, cb, options = {}) {
     oldVal = newVal
   }
 
-  if(options.immediate) {
+  if (options.immediate) {
     runFn()
   } else {
     oldVal = effectFn()
@@ -161,13 +159,13 @@ function watch(source, cb, options = {}) {
 
 
   function traverse(value, seen = new Set()) {
-    if(typeof value !== 'object' || value == null || seen.has(value)) {
-      seen.add(value)
+    if (typeof value !== 'object' || value == null || seen.has(value)) return
+    seen.add(value)
 
-      for(let k in value) {
-        traverse(value[k], seen)
-      }
+    for (let k in value) {
+      traverse(value[k], seen)
     }
+
     return value
   }
 }
