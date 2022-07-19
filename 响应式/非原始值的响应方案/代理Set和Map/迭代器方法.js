@@ -116,6 +116,36 @@ const mutableInstrumentations = {
       callback.call(thisArg, wrap(v), wrap(k), this)
     })
     // target.forEach(callback)
+  },
+
+  // 共用iterationMethod方法
+  [Symbol.iterator]: iterationMethod
+}
+
+// 抽离函数，便于复用
+function iterationMethod() {
+  const target = this.raw
+  const itr = target[Symbol.iterator]()
+
+  const wrap = val => typeof val === 'object' ? reactive(val) : val
+  // 调用track函数建立响应
+  track(target, INTERATE_KEY)
+
+  return {
+    next() {
+      // 调用原始的迭代器进行获取value和done
+      const {value, done} = itr.next()
+       return {
+        // 不是undefined，则进行包裹
+        value: value ? [wrap(value[0]), wrap(value[1])] : value,
+        done
+      }
+    },
+
+    // 可迭代协议
+    [Symbol.iterator]() {
+      return this
+    }
   }
 }
 
