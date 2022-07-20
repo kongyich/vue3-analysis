@@ -119,7 +119,48 @@ const mutableInstrumentations = {
   },
 
   // 共用iterationMethod方法
-  [Symbol.iterator]: iterationMethod
+  [Symbol.iterator]: iterationMethod,
+  entries: iterationMethod,
+  values: valuesIterationMethod,
+}
+
+function keyIterationMethod() {
+  const target = this.raw
+  const itr = target.keys()
+
+  const wrap = v => typeof v === 'object' ? reactive(v) : v
+
+  // key与values和entries不一样，key不需要触发值的更新只关心键的更新
+  track(target, MAP_KEYS_INTERATE_KEY)
+
+  return {
+    next() {
+      const { value, done } = itr.next()
+      return {
+        value: wrap(value),
+        done
+      }
+    }
+  }
+}
+
+function valuesIterationMethod() {
+  const target = this.raw
+  // 通过target.values获取原始的迭代器方法
+  const itr = target.values()
+
+  const wrap = v => typeof v === 'object' ? reactive(v) : v
+  track(target, INTERATE_KEY)
+
+  return {
+    next() {
+      const { value, done } = itr.next()
+      return {
+        value: wrap(value),
+        done
+      }
+    }
+  }
 }
 
 // 抽离函数，便于复用
@@ -274,6 +315,16 @@ function trigger(target, key, type, newValue) {
   // 如果是map类型的set操作，也应该触发响应
   if (type === triggerType.ADD || type === triggerType.DELETE || (type === triggerType.SET && Object.prototype.toString.call(target) === '[object Map]')) {
     const iterateEffects = depsMap.get(INTERATE_KEY)
+    iterateEffects && iterateEffects.forEach(effectFn => {
+      if (effectFn !== activeEffect) {
+        effectsToRun.add(effectFn)
+      }
+    })
+  }
+
+  // 处理Map中的keys的操作，只需更新key
+  if((type === 'ADD' || type === 'DELETE' && Object.prototype.toString.call(target) === '[object Map]')) {
+    const iterateEffects = depsMap.get(MAP_KEYS_INTERATE_KEY)
     iterateEffects && iterateEffects.forEach(effectFn => {
       if (effectFn !== activeEffect) {
         effectsToRun.add(effectFn)
