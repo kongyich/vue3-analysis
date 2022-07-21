@@ -501,3 +501,24 @@ function toRef(obj, key) {
   })
   return wrapper
 }
+
+
+function proxyRef(target) {
+  return new Proxy(target, {
+    get(target, key) {
+      let value = Reflect.get(target, key, receiver)
+      // 如果读取的值是ref，则返回他的value属性值
+      return value.__v_isRef ? value.value : value
+    },
+    set(target, key, newVal) {
+      // 通过target读取其值
+      let oldVal = target[key]
+      // 如果是ref，则通过设置其对应的value属性值
+      if(oldVal.__v_isRef) {
+        value.value = newVal
+        return true
+      }
+      return Reflect.set(target, key, newVal, receiver)
+    }
+  })
+}
