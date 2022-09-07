@@ -3,14 +3,16 @@ const createComponentInstance = function (vnode) {
     vnode,
     type: vnode.type,
     props: {},
-    setupState: {}
+    setupState: {},
+    emit: () => { } // 增加
   }
+
+  component.emit = emit.bind(null, component) // 增加
 
   return component
 }
 
 const setupComponent = function (instance) {
-
   instance.props = instance.vnode.props || {}
   setupStatefulComponent(instance)
 }
@@ -23,9 +25,6 @@ const PublicInstanceProxyHandlers = {
   get({ _: instance }, key) {
     const { setupState, props } = instance
 
-    // if (key in setupState) {
-    //   return setupState[key]
-    // }
     const hasOwn = (val, key) =>
       Object.prototype.hasOwnProperty.call(val, key);
     if (hasOwn(setupState, key)) {
@@ -48,8 +47,9 @@ const setupStatefulComponent = function (instance) {
   const { setup } = component
 
   if (setup) {
-    // const setupResult = setup();
-    const setupResult = setup(instance.props);
+    const setupResult = setup(instance.props, {  // 修改
+      emit: instance.emit
+    });
     handleSetupResult(instance, setupResult)
   }
 }
@@ -60,4 +60,25 @@ const handleSetupResult = function (instance, setupResult) {
   }
 
   instance.render = instance.type.render;
+}
+
+const emit = function (instance, event, ...args) {
+  const { props } = instance
+  const handlerName = toHandlerKey(camelize(event))
+  const handler = props[handlerName]
+  handler && handler(...args)
+}
+
+const toHandlerKey = function (str) {
+  return str ? 'on' + capitalize(str) : ''
+}
+
+const capitalize = function(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+const camelize = function(str) {
+  return str.replace(/-(\w)/g, (_, c) => {
+    return c ? c.toUpperCase() : ''
+  })
 }
