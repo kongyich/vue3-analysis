@@ -4,8 +4,11 @@ const createComponentInstance = function (vnode, parent) { // 修改
     type: vnode.type,
     props: {},
     setupState: {},
-    provides: parent ? parent.provides : {}, // 修改
-    parent: parent ? parent : {}, // 修改
+    provides: parent ? parent.provides : {},
+    parent: parent ? parent : {},
+    // 是否首次渲染？
+    isMounted: false,
+    subTree: {},
     slots: {},
     emit: () => {}
   }
