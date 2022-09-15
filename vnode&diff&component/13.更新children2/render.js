@@ -28,35 +28,35 @@ const createTextVNode = function(text) {
 
 // 渲染
 const render = function (vnode, container) {
-  patch(null, vnode, container, null) 
+  patch(null, vnode, container, null, null)  // 修改
 }
 
 // vnode对比
 const Fragment = Symbol("Fragment"); 
 const Text = Symbol("Text");
-const patch = function (n1, n2, container, parentComponent) {
+const patch = function (n1, n2, container, parentComponent, anchor) { // 修改
 
   const { type, shapeFlag } = n2 
 
   switch(type) {
     case Fragment:
-      processFragment(n1, n2, container, parentComponent);
+      processFragment(n1, n2, container, parentComponent, anchor); // 修改
       break
     case Text:
       processText(n1, n2, container);
       break
     default:
       if (shapeFlag & ShapeFlags.ELEMENT) {
-        processElement(n1, n2, container, parentComponent) 
+        processElement(n1, n2, container, parentComponent, anchor)  // 修改
       } else if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
-        processComponent(n1, n2, container, parentComponent)
+        processComponent(n1, n2, container, parentComponent, anchor) // 修改
       }
       break
   }
 }
 
-const processFragment = function(n1, n2, container, parentComponent) { 
-  mountChildren(n2.children, container, parentComponent) 
+const processFragment = function(n1, n2, container, parentComponent, anchor) {  // 修改
+  mountChildren(n2.children, container, parentComponent, anchor)  // 修改
 }
 
 const processText = function(n1, n2, container) { 
@@ -65,29 +65,28 @@ const processText = function(n1, n2, container) {
   container.append(textVNode) 
 }
 
-const processElement = function (n1, n2, container, parentComponent) { 
+const processElement = function (n1, n2, container, parentComponent, anchor) {  // 修改
   if(!n1) {
-    mountElement(n2, container, parentComponent) 
+    mountElement(n2, container, parentComponent, anchor)  // 修改
   } else { 
-    patchElement(n1, n2, container, parentComponent) 
+    patchElement(n1, n2, container, parentComponent, anchor)  // 修改
   }
 }
 
 const EMPTY_OBJ = {}
 
-const patchElement = function(n1, n2, container, parentComponent) {
+const patchElement = function(n1, n2, container, parentComponent, anchor) { // 修改
 
   const oldProps = n1.props || EMPTY_OBJ
   const newProps = n2.props || EMPTY_OBJ
 
   const el = (n2.el = n1.el)
   // children update
-  patchChildren(n1, n2, container, parentComponent) // 修改
+  patchChildren(n1, n2, container, parentComponent, anchor) // 修改
   // props update
   patchProps(el, oldProps, newProps)
 }
-// add
-const patchChildren = function(n1, n2, container, parentComponent) {
+const patchChildren = function(n1, n2, container, parentComponent, anchor) { // 修改
   
   const prevShapFlag = n1.shapeFlag
   const c1 = n1.children
@@ -108,12 +107,75 @@ const patchChildren = function(n1, n2, container, parentComponent) {
     // 当前children为array
     if(prevShapFlag & ShapeFlags.TEXT_CHILDREN) {
       setElementText(container, "")
-      mountChildren(c2, container, parentComponent)
+      mountChildren(c2, container, parentComponent, anchor) // 修改
+    } else {
+      // Array -> Array
+      // diff children
+      patchKeyedChildren(c1, c2, container, parentComponent, anchor) // 修改
     }
   }
 }
 
-// add
+function patchKeyedChildren(
+  c1,
+  c2,
+  container,
+  parentComponent,
+  parentAnchor
+) {
+  const l2 = c2.length;
+  let i = 0;
+  let e1 = c1.length - 1;
+  let e2 = l2 - 1;
+
+  function isSomeVNodeType(n1, n2) {
+    return n1.type === n2.type && n1.key === n2.key;
+  }
+
+  while (i <= e1 && i <= e2) {
+    const n1 = c1[i];
+    const n2 = c2[i];
+
+    if (isSomeVNodeType(n1, n2)) {
+      patch(n1, n2, container, parentComponent, parentAnchor);
+    } else {
+      break;
+    }
+
+    i++;
+  }
+
+  while (i <= e1 && i <= e2) {
+    const n1 = c1[e1];
+    const n2 = c2[e2];
+
+    if (isSomeVNodeType(n1, n2)) {
+      patch(n1, n2, container, parentComponent, parentAnchor);
+    } else {
+      break;
+    }
+
+    e1--;
+    e2--;
+  }
+
+  if (i > e1) {
+    if (i <= e2) {
+      const nextPos = e2 + 1;
+      const anchor = nextPos < l2 ? c2[nextPos].el : null;
+      while (i <= e2) {
+        patch(null, c2[i], container, parentComponent, anchor);
+        i++;
+      }
+    }
+  } else if (i > e2) {
+    while (i <= e1) {
+      hostRemove(c1[i].el);
+      i++;
+    }
+  } else {}
+}
+
 const unmountChildren = function(children) {
   for(let i = 0; i < children.length; i++) {
     let el = children[i].el
@@ -123,7 +185,6 @@ const unmountChildren = function(children) {
   }
 }
 
-// add
 const setElementText = function(el, text) {
   el.textContent = text
 }
@@ -149,14 +210,14 @@ const patchProps = function(el, oldProps, newProps) {
   }
 }
 
-const mountElement = function (vnode, container, parentComponent) {
+const mountElement = function (vnode, container, parentComponent, anchor) { // 修改
   const el = (vnode.el = document.createElement(vnode.type));
   const { children, props, shapeFlag } = vnode
 
   if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
     el.textContent = children
   } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-    mountChildren(children, el, parentComponent)
+    mountChildren(children, el, parentComponent, anchor) // 修改
   }
 
   // props
@@ -166,7 +227,13 @@ const mountElement = function (vnode, container, parentComponent) {
     mountProps(el, key, null, prop)
   }
 
-  container.append(el)
+  // container.append(el)
+  insert(el, container, anchor)  // 修改
+}
+
+// add
+const insert = function(child, parent, anchor) {
+  parent.insertBefore(child, anchor || null)
 }
 
 const mountProps = function(el, key, prevVal, nextVal) {
@@ -184,25 +251,25 @@ const mountProps = function(el, key, prevVal, nextVal) {
   }
 }
 
-const mountChildren = function (children, container, parentComponent) {
+const mountChildren = function (children, container, parentComponent,anchor) { // 修改
   children.forEach(v => {
-    patch(null, v, container, parentComponent)
+    patch(null, v, container, parentComponent, anchor) // 修改
   })
 }
 
-const processComponent = function (n1, n2, container, parentComponent) {
-  mountComponent(n2, container, parentComponent)
+const processComponent = function (n1, n2, container, parentComponent, anchor) {  // 修改
+  mountComponent(n2, container, parentComponent, anchor)  // 修改
 }
 
-const mountComponent = function (vnode, container, parentComponent) {
+const mountComponent = function (vnode, container, parentComponent, anchor) {  // 修改
   // 创建组件实例
   const instance = createComponentInstance(vnode, parentComponent)
 
   setupComponent(instance)
-  setupRenderEffect(instance, vnode, container)
+  setupRenderEffect(instance, vnode, container, anchor)  // 修改
 }
 
-const setupRenderEffect = function (instance, vnode, container) {
+const setupRenderEffect = function (instance, vnode, container, anchor) {  // 修改
 
   effect(()=>{
     if(!instance.isMounted) {
@@ -210,7 +277,7 @@ const setupRenderEffect = function (instance, vnode, container) {
       const { proxy } = instance;
       const subTree = (instance.subTree = instance.render.call(proxy));
 
-      patch(null, subTree, container, instance);
+      patch(null, subTree, container, instance, anchor);  // 修改
       vnode.el = subTree.el;
       instance.isMounted = true;
     } else {
@@ -221,7 +288,7 @@ const setupRenderEffect = function (instance, vnode, container) {
       const prevSubTree = instance.subTree
 
       instance.subTree = subTree;
-      patch(prevSubTree, subTree, container, instance)
+      patch(prevSubTree, subTree, container, instance, anchor)  // 修改
 
     }
   })
@@ -259,16 +326,20 @@ const inject = function(key, defaultValue) {
   }
 }
 
-// ex1 Array -> String
-// const prevChild = [h("div", {}, "A"), h("div", {}, "B")];
-// const nextChild = "newChildren";
-
-// ex2 Text -> Array
-const prevChild = "oldChildren"
-const nextChild = [h("div", {}, "A"), h("div", {}, "B")];
-// ex3 Text -> Text
-// const prevChild = "oldChildren"
-// const nextChild = "newChildren"
+// ex Arrxy -> Array
+// (a b) c
+// (a b) d e
+const prevChild = [
+  h("p", { key: "A" }, "A"),
+  h("p", { key: "B" }, "B"),
+  h("p", { key: "C" }, "C"),
+];
+const nextChild = [
+  h("p", { key: "A" }, "A"),
+  h("p", { key: "B" }, "B"),
+  h("p", { key: "C" }, "C"),
+  h("p", { key: "E" }, "E"),
+];
 
 const App = {
   setup() {
