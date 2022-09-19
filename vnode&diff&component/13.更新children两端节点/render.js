@@ -82,7 +82,7 @@ const patchElement = function(n1, n2, container, parentComponent, anchor) { // �
 
   const el = (n2.el = n1.el)
   // children update
-  patchChildren(n1, n2, container, parentComponent, anchor) // 修改
+  patchChildren(n1, n2, el, parentComponent, anchor) // 修改
   // props update
   patchProps(el, oldProps, newProps)
 }
@@ -159,6 +159,10 @@ function patchKeyedChildren(
     e2--;
   }
 
+  console.log(i); // 3
+  console.log(e1); // 2
+  console.log(e2); // 4
+
   if (i > e1) {
     if (i <= e2) {
       const nextPos = e2 + 1;
@@ -170,10 +174,16 @@ function patchKeyedChildren(
     }
   } else if (i > e2) {
     while (i <= e1) {
-      hostRemove(c1[i].el);
+      remove(c1[i].el);
       i++;
     }
   } else {}
+}
+
+const remove = function(child) {
+  const parent = child.parentNode
+
+  if(parent) parent.removeChild(child)
 }
 
 const unmountChildren = function(children) {
@@ -228,11 +238,12 @@ const mountElement = function (vnode, container, parentComponent, anchor) { // �
   }
 
   // container.append(el)
-  insert(el, container, anchor)  // 修改
+  insert(container, el, anchor)  // 修改
 }
 
 // add
-const insert = function(child, parent, anchor) {
+const insert = function(parent, child, anchor) {
+  // container.append(el)
   parent.insertBefore(child, anchor || null)
 }
 
@@ -329,16 +340,29 @@ const inject = function(key, defaultValue) {
 // ex Arrxy -> Array
 // (a b) c
 // (a b) d e
+// const prevChild = [
+//   h("p", { key: "A" }, "A"),
+//   h("p", { key: "B" }, "B"),
+//   h("p", { key: "C" }, "C"),
+// ];
+// const nextChild = [
+//   h("p", { key: "A" }, "A"),
+//   h("p", { key: "B" }, "B"),
+//   h("p", { key: "C" }, "C"),
+//   h("p", { key: "D" }, "D"),
+//   h("p", { key: "E" }, "E"),
+// ];
+
 const prevChild = [
   h("p", { key: "A" }, "A"),
   h("p", { key: "B" }, "B"),
   h("p", { key: "C" }, "C"),
 ];
 const nextChild = [
+  h("p", { key: "D" }, "D"),
   h("p", { key: "A" }, "A"),
   h("p", { key: "B" }, "B"),
   h("p", { key: "C" }, "C"),
-  h("p", { key: "E" }, "E"),
 ];
 
 const App = {
@@ -365,3 +389,5 @@ const App = {
 const dom = document.querySelector("#app")
 createApp(App).mount(dom)
 
+//  abc
+// dabc
