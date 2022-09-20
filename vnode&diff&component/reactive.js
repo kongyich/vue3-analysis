@@ -9,7 +9,9 @@ function effect(fn) {
     activeEffect = effectFn
     fn()
   }
+  const runner = effectFn
   effectFn()
+  return runner
 }
 
 function reactive(obj) {
@@ -18,13 +20,11 @@ function reactive(obj) {
       // 收集依赖
       track(target, key)
       return Reflect.get(target, key, receiver)
-
     },
     set(target, key, newVal, receiver) {
       // 触发依赖
       Reflect.set(target, key, newVal, receiver)
       trigger(target, key)
-      
     }
   })
 }
@@ -65,17 +65,14 @@ function trigger(target, key) {
   effectsToRun.forEach(effect => effect())
 }
 
-
 const isRef = function(ref) {
   return !!ref.__is_ref
 }
-
 
 const unRef = function(ref) {
   // 看看是不是ref ref -> ref.value   ref === value => ref
   return isRef(ref) ? ref.value : ref
 }
-
 
 const proxyRef = function(proxyWithRef) {
   return new Proxy(proxyWithRef, {
