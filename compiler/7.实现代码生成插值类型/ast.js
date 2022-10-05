@@ -3,4 +3,6 @@ const NodeType = {
   SIMPLE_EXPRESSION: "simple_expression",
   ELEMENT: "element",
   TEXT: "text",
+
+  ROOT: "root" // add
 }
