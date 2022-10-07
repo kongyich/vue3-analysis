@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <script src="./ast.js"></script>
+  <script src="./parse.js"></script>
+  <script src="./codegen.js"></script>
+  <script>
+    // const { toDisplayString: _toDisplayString, openBlock: _openBlock, createElementBlock: _createElementBlock } = Vue
+
+    // return function render(_ctx, _cache, $props, $setup, $data, $options) {
+    //   return (_openBlock(), _createElementBlock("div", null, "hi! " + _toDisplayString(_ctx.name), 1 /* TEXT */))
+    // }
+
+    const ast = baseParse("<div>hi,{{message}}</div>");
+    transform(ast, {
+      nodeTransforms: [transformExpression, transformElement, transformText],
+    });
+
+    // let ast = baseParse("{{ kongyi }}")
+
+    // transform(ast, {
+    //   nodeTransforms: [transformExpression],
+    // });
+    let str_fn = generate(ast)
+
+    console.log(str_fn);
+  </script>
+</body>
+
+</html>
